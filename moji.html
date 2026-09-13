@@ -24,7 +24,7 @@
     --card:#ffffff;
     --shadow:0 10px 24px -12px rgba(43,58,74,.28);
   }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   html,body{margin:0;height:100%}
   body{
     font-family:"M PLUS Rounded 1c",system-ui,sans-serif;
@@ -130,6 +130,10 @@
   .stages button.on .no{opacity:.85}
   .stages button.inc{background:var(--sky-soft);color:var(--sky)}
   .stagenote{font-size:.82rem;color:var(--ink-soft);font-weight:600;margin:-4px 0 0;line-height:1.6}
+  .ministages{display:flex;gap:8px;margin:2px 0 6px}
+  .ministages button{font-family:inherit;font-weight:700;font-size:.78rem;color:var(--sky);
+    background:var(--sky-soft);border:none;border-radius:10px;padding:7px 13px;cursor:pointer}
+  .ministages button:active{transform:translateY(1px)}
   .start{width:100%;margin-top:8px;border:none;border-radius:18px;padding:18px;font-family:inherit;
     font-weight:800;font-size:1.15rem;color:#fff;background:var(--sky);cursor:pointer;
     box-shadow:0 6px 0 #3a63d6;transition:transform .08s,box-shadow .08s}
@@ -229,9 +233,13 @@
 
     <div class="field">
       <div class="lbl" style="display:flex;align-items:baseline;justify-content:space-between">
-        <span>どこまで ならった？</span><em id="stageEm" style="font-style:normal;color:var(--sky);font-size:.82rem">あ行まで</em>
+        <span>ならった行を えらぶ（いくつでも）</span><em id="stageEm" style="font-style:normal;color:var(--sky);font-size:.82rem">あ行</em>
       </div>
       <div class="stages" id="stageRow"></div>
+      <div class="ministages">
+        <button type="button" id="allStages">ぜんぶ えらぶ</button>
+        <button type="button" id="clearStages">クリア</button>
+      </div>
       <p class="stagenote" id="stageNote"></p>
     </div>
 
@@ -311,7 +319,7 @@ const DATA = {
   dakuon: [
     {k:'が',h:'ga'},{k:'ぎ',h:'gi'},{k:'ぐ',h:'gu'},{k:'げ',h:'ge'},{k:'ご',h:'go'},
     {k:'ざ',h:'za'},{k:'じ',h:'ji',kun:'zi'},{k:'ず',h:'zu'},{k:'ぜ',h:'ze'},{k:'ぞ',h:'zo'},
-    {k:'だ',h:'da'},{k:'ぢ',h:'ji',kun:'di'},{k:'づ',h:'zu',kun:'du'},{k:'で',h:'de'},{k:'ど',h:'do'},
+    {k:'だ',h:'da'},{k:'ぢ',h:'ji',kun:'di'},{k:'づ',h:'du',kun:'du'},{k:'で',h:'de'},{k:'ど',h:'do'},
     {k:'ば',h:'ba'},{k:'び',h:'bi'},{k:'ぶ',h:'bu'},{k:'べ',h:'be'},{k:'ぼ',h:'bo'},
     {k:'ぱ',h:'pa'},{k:'ぴ',h:'pi'},{k:'ぷ',h:'pu'},{k:'ぺ',h:'pe'},{k:'ぽ',h:'po'}
   ],
@@ -335,9 +343,19 @@ const STAGES = [
   {n:'あ行', c:'あいうえお'}, {n:'か行', c:'かきくけこ'}, {n:'さ行', c:'さしすせそ'},
   {n:'た行', c:'たちつてと'}, {n:'な行', c:'なにぬねの'}, {n:'は行', c:'はひふへほ'},
   {n:'ま行', c:'まみむめも'}, {n:'や行', c:'やゆよ'},     {n:'ら行', c:'らりるれろ'},
-  {n:'わ行・ん', c:'わをん'}, {n:'だくおん', c:''}, {n:'ようおん', c:''}
+  {n:'わ行・ん', c:'わをん'}, {n:'だくおん', c:''}, {n:'ようおん', c:''}, {n:'っ', c:''}
 ];
-const DAKUON_STAGE = 10, YOON_STAGE = 11;
+const DAKUON_STAGE = 10, YOON_STAGE = 11, SOKUON_STAGE = 12;
+
+/* っ の問題（っ＋かな → 子音を重ねる） */
+const SOKUON = [
+  {k:'っか',h:'kka'},{k:'っき',h:'kki'},{k:'っく',h:'kku'},{k:'っけ',h:'kke'},{k:'っこ',h:'kko'},
+  {k:'っさ',h:'ssa'},{k:'っし',h:'sshi',kun:'ssi'},{k:'っす',h:'ssu'},{k:'っせ',h:'sse'},{k:'っそ',h:'sso'},
+  {k:'った',h:'tta'},{k:'っち',h:'tchi',kun:'tti'},{k:'って',h:'tte'},{k:'っと',h:'tto'},
+  {k:'っぱ',h:'ppa'},{k:'っぴ',h:'ppi'},{k:'っぷ',h:'ppu'},{k:'っぺ',h:'ppe'},{k:'っぽ',h:'ppo'},
+  {k:'っしゃ',h:'ssha',kun:'ssya'},{k:'っしゅ',h:'sshu',kun:'ssyu'},{k:'っしょ',h:'ssho',kun:'ssyo'},
+  {k:'っちゃ',h:'tcha',kun:'ttya'},{k:'っちゅ',h:'tchu',kun:'ttyu'},{k:'っきゃ',h:'kkya'},{k:'っきゅ',h:'kkyu'}
+];
 // 各文字にステージ番号を付与
 const ENTRIES = [];
 DATA.kihon.forEach(e=>{
@@ -347,9 +365,10 @@ DATA.kihon.forEach(e=>{
 });
 DATA.dakuon.forEach(e=>ENTRIES.push({...e, s:DAKUON_STAGE}));
 DATA.yoon.forEach(e=>ENTRIES.push({...e, s:YOON_STAGE}));
+SOKUON.forEach(e=>ENTRIES.push({...e, s:SOKUON_STAGE}));
 
 /* ========== 状態 ========== */
-const cfg = {stage:0, count:20, style:'hepburn', case:'lower'};
+const cfg = {stages:new Set([0]), count:20, style:'hepburn', case:'lower'};
 let deck=[], idx=0, score=0, answered=false, wrongList=[], keyLetters=['①','②','③','④'];
 
 const $ = s=>document.querySelector(s);
@@ -363,7 +382,7 @@ function bindSeg(id, key, after){
     const b=e.target.closest('button'); if(!b) return;
     [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));
     b.classList.add('on');
-    cfg[key]= b.dataset[key] ?? b.dataset.level ?? b.dataset.count ?? b.dataset.style;
+    cfg[key]= b.dataset[key] ?? b.dataset.count ?? b.dataset.style;
     if(after) after();
   });
 }
@@ -377,30 +396,31 @@ bindSeg('caseSeg','case', ()=>{
   $('#caseHint').textContent = cfg.case==='upper' ? '大文字' : '小文字';
 });
 
-/* ---- ステージ選択 ---- */
+/* ---- ステージ選択（複数可） ---- */
 const stageRow = $('#stageRow');
 STAGES.forEach((s,i)=>{
   const b=document.createElement('button'); b.type='button';
   b.innerHTML=`<span class="no">${i+1}</span>${s.n}`;
-  b.addEventListener('click',()=>{ cfg.stage=i; paintStages(); });
+  b.addEventListener('click',()=>{
+    if(cfg.stages.has(i)) cfg.stages.delete(i); else cfg.stages.add(i);
+    paintStages();
+  });
   stageRow.appendChild(b);
 });
+$('#allStages').addEventListener('click',()=>{ STAGES.forEach((s,i)=>cfg.stages.add(i)); paintStages(); });
+$('#clearStages').addEventListener('click',()=>{ cfg.stages.clear(); paintStages(); });
 function paintStages(){
-  [...stageRow.children].forEach((b,i)=>{
-    b.classList.toggle('on', i===cfg.stage);
-    b.classList.toggle('inc', i<cfg.stage);
-  });
-  $('#stageEm').textContent = STAGES[cfg.stage].n + 'まで';
-  const learned = STAGES.slice(0,cfg.stage+1).map(s=>s.n).join('・');
-  const n = ENTRIES.filter(e=>e.s<=cfg.stage).length;
-  $('#stageNote').textContent = `${learned} の ${n}もじ`;
-  const el = stageRow.children[cfg.stage];
-  if(el) el.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'});
+  [...stageRow.children].forEach((b,i)=> b.classList.toggle('on', cfg.stages.has(i)));
+  const sel = [...cfg.stages].sort((a,b)=>a-b);
+  $('#stageEm').textContent = sel.length ? sel.map(i=>STAGES[i].n).join('・') : 'なし';
+  const n = buildPool().length;
+  $('#stageNote').textContent = sel.length ? `えらんだ行の ${n}もじ` : '行を えらんでね';
+  const btn=$('#startBtn'); if(btn){ btn.disabled = n<1; btn.textContent = n<1 ? '行を えらんでね' : 'はじめる'; }
 }
 
 /* ---- プール構築 ---- */
 function buildPool(){
-  return ENTRIES.filter(e=>e.s<=cfg.stage);
+  return ENTRIES.filter(e=>cfg.stages.has(e.s));
 }
 
 /* ---- クイズ開始 ---- */
@@ -434,9 +454,14 @@ function renderQuestion(){
   kanaEl.classList.remove('pop'); void kanaEl.offsetWidth; kanaEl.classList.add('pop');
   $('#hanamaru').classList.remove('show');
 
-  // 選択肢（同じプールから紛らわしいダミーを作る）
-  const pool = buildPool().map(roma).filter((v,i,a)=>a.indexOf(v)===i);
-  const distractors = shuffle(pool.filter(v=>v!==answer)).slice(0,3);
+  // 選択肢（同じプールから紛らわしいダミーを、足りなければ全体から補う）
+  let pool = buildPool().map(roma).filter((v,i,a)=>a.indexOf(v)===i).filter(v=>v!==answer);
+  if(pool.length < 3){
+    const extra = ENTRIES.map(roma).filter((v,i,a)=>a.indexOf(v)===i)
+      .filter(v=>v!==answer && !pool.includes(v));
+    pool = pool.concat(shuffle(extra));
+  }
+  const distractors = shuffle(pool).slice(0,3);
   const opts = shuffle([answer, ...distractors]);
 
   const box=$('#choices'); box.innerHTML='';
@@ -540,6 +565,16 @@ if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged=()=>{}; }
 
 /* ---- 初期化 ---- */
 paintStages();
+
+/* ダブルタップ拡大の防止（iOS Safari むけの保険）
+   ボタンのタップは邪魔しないよう、拡大ジェスチャだけを止める */
+(function(){
+  // iOS の拡大ジェスチャ
+  ['gesturestart','gesturechange','gestureend'].forEach(ev=>
+    document.addEventListener(ev, e=>e.preventDefault(), {passive:false}));
+  // ダブルタップの既定動作（ズーム）だけを打ち消す
+  document.addEventListener('dblclick', e=>e.preventDefault(), {passive:false});
+})();
 </script>
 </body>
 </html>

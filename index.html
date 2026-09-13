@@ -14,7 +14,7 @@
     --sky:#4f7cff; --sky-soft:#e8eeff; --marigold:#ffb23e;
     --hanamaru:#e8340c; --card:#fff; --shadow:0 10px 24px -12px rgba(43,58,74,.28);
   }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   html,body{margin:0;height:100%}
   body{
     font-family:"M PLUS Rounded 1c",system-ui,sans-serif;color:var(--ink);
@@ -44,6 +44,9 @@
   .card .no{display:inline-block;font-family:"Zen Maru Gothic";font-weight:900;font-size:.72rem;
     letter-spacing:.14em;color:#fff;background:var(--sky);border-radius:8px;padding:4px 9px;margin-bottom:10px}
   .card.b .no{background:var(--marigold)}
+  .card.c .no{background:var(--grass)}
+  .card.c .tile{border-color:var(--grass);box-shadow:0 3px 0 #b7ecc9}
+  .card.c .go{color:#1c9e52}
   .card h2{font-family:"Zen Maru Gothic";font-weight:900;font-size:1.3rem;margin:0 0 6px}
   .card p{color:var(--ink-soft);font-weight:500;font-size:.9rem;line-height:1.75;margin:0 0 14px}
   .sample{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
@@ -90,10 +93,21 @@
     <a class="card b" href="kotoba.html">
       <span class="no">その2</span>
       <h2>ことば編</h2>
-      <p>ことばを見て、文字タイルをならべて書きます。出てくることばは自分でえらべます。</p>
+      <p>ことばを見て、文字タイルをならべるか、キーボードで打ちます。習った行を自由にえらべます。</p>
       <div class="sample">
         <span class="kana">そら</span><span class="arrow">→</span>
         <span class="tile">s</span><span class="tile">o</span><span class="tile">r</span><span class="tile">a</span>
+      </div>
+      <span class="go">はじめる →</span>
+    </a>
+
+    <a class="card c" href="bunsho.html">
+      <span class="no">その3</span>
+      <h2>文しょう編</h2>
+      <p>「きょうは、かようび。」のような文を、キーボードで打ちこみます。句読点も打てます。</p>
+      <div class="sample">
+        <span class="kana" style="font-size:1.1rem">きょうは、</span><span class="arrow">→</span>
+        <span class="tile">k</span><span class="tile">y</span><span class="tile">o</span><span class="tile">u</span><span class="tile">…</span>
       </div>
       <span class="go">はじめる →</span>
     </a>
@@ -114,5 +128,16 @@
   </footer>
 
 </div>
+<script>
+/* ダブルタップ拡大の防止（iOS Safari むけの保険）
+   ボタンのタップは邪魔しないよう、拡大ジェスチャだけを止める */
+(function(){
+  // iOS の拡大ジェスチャ
+  ['gesturestart','gesturechange','gestureend'].forEach(ev=>
+    document.addEventListener(ev, e=>e.preventDefault(), {passive:false}));
+  // ダブルタップの既定動作（ズーム）だけを打ち消す
+  document.addEventListener('dblclick', e=>e.preventDefault(), {passive:false});
+})();
+</script>
 </body>
 </html>
