@@ -76,6 +76,9 @@
     background:var(--sky-soft);border:none;border-radius:10px;padding:7px 13px;cursor:pointer}
   .ministages button:active{transform:translateY(1px)}
   #specRow button.on{background:var(--marigold);border-color:var(--marigold);color:#fff}
+  .tool.back1{color:var(--coral);border-color:#f4d3d3}
+  .tool.back1:active{background:var(--coral-soft);border-color:var(--coral)}
+  .tool:disabled{opacity:.45;pointer-events:none}
 
   /* 単語えらび */
   .picker{border:2.5px solid var(--line);border-radius:16px;overflow:hidden}
@@ -366,7 +369,8 @@
     <div class="tray" id="tray"></div>
     <div class="keyboard" id="keyboard"></div>
     <div class="toolrow" id="toolRow">
-      <button class="tool" id="clearBtn" type="button">けす</button>
+      <button class="tool back1" id="backBtn" type="button" aria-label="1もじ けす">⌫ 1もじ</button>
+      <button class="tool" id="clearBtn" type="button">ぜんぶ けす</button>
       <button class="tool" id="giveBtn" type="button">こたえを みる</button>
     </div>
     <button class="next" id="nextBtn">つぎへ →</button>
@@ -1139,6 +1143,7 @@ function render(){
   $('#answerLine').textContent='';
   $('#nextBtn').classList.remove('show');
   $('#toolRow').classList.remove('hidden');
+  updateTools();
 
   // タイルの大きさを文字数にあわせる
   const n = answer.length;
@@ -1286,6 +1291,7 @@ function paintSlots(){
       b.classList.toggle('used', !!(t && t.used));
     });
   }
+  updateTools();
 }
 
 function check(){
@@ -1316,11 +1322,34 @@ function finish(){
   nb.classList.add('show');
 }
 
+/* ⌫ さいごの1もじだけ けす（タイル・キーボード どちらでも） */
+function backOne(){
+  if(answered) return;
+  let i = slotVals.findIndex(v=>v===null);
+  i = (i<0 ? slotVals.length : i) - 1;      // さいごに入っているマス
+  if(i<0) return;
+  const v = slotVals[i];
+  if(cfg.input!=='type' && v && v.id>=0){   // タイルは トレイに もどす
+    const t = tiles.find(x=>x.id===v.id);
+    if(t) t.used = false;
+  }
+  slotVals[i] = null;
+  paintSlots();
+  if(cfg.input==='type') updateKeys();
+  updateTools();
+}
+function updateTools(){                      // 空のときは ⌫ を おせなくする
+  const b = $('#backBtn');
+  if(b) b.disabled = answered || slotVals.every(v=>v===null);
+}
+$('#backBtn').addEventListener('click',backOne);
+
 $('#clearBtn').addEventListener('click',()=>{
   if(answered) return;
   slotVals = slotVals.map(()=>null);
   if(cfg.input==='type'){ updateKeys(); } else { tiles.forEach(t=>t.used=false); }
   paintSlots();
+  updateTools();
 });
 $('#giveBtn').addEventListener('click',()=>{
   if(answered) return;
